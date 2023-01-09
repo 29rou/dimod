@@ -1,5 +1,5 @@
 numpy==1.19.4
-cython==0.29.21
+cython==0.29.33
 
 reno==3.3.0  # for changelog
 
