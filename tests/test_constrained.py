@@ -44,7 +44,7 @@ class TestAddConstraint(unittest.TestCase):
         b = Spin('b')
         c = Spin('c')
 
-        cqm.add_constraint(2*a*b + b*c - c + 1 <= 1)
+        cqm.add_constraint(2*a*b + b*c - c <= 0)
 
     def test_terms(self):
         cqm = CQM()

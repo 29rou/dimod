@@ -83,18 +83,18 @@ def _binary_product(variables):
 
 def _new_product(variables, u, v):
     # make a new product variable not in variables, then add it
-    p = '{}*{}'.format(u, v)
+    p = f'{u}*{v}'
     while p in variables:
-        p = '_' + p
+        p = f'_{p}'
     variables.add(p)
     return p
 
 
 def _new_aux(variables, u, v):
     # make a new auxiliary variable not in variables, then add it
-    aux = 'aux{},{}'.format(u, v)
+    aux = f'aux{u},{v}'
     while aux in variables:
-        aux = '_' + aux
+        aux = f'_{aux}'
     variables.add(aux)
     return aux
 
@@ -176,7 +176,7 @@ def make_quadratic(poly, strength, vartype=None, bqm=None):
         p = _new_product(variables, u, v)
         terms = [term for term in poly if u in term and v in term]
         for term in terms:
-            new = tuple(w for w in term if w != u and w != v) + (p,)
+            new = tuple(w for w in term if w not in [u, v]) + (p,)
             poly[new] = poly.pop(term)
 
         # add a constraint enforcing the relationship between p == u*v

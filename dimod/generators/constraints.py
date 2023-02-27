@@ -84,7 +84,7 @@ def combinations(n, k, strength=1, vartype=BINARY):
             raise TypeError('n should be a collection or an integer')
 
     if k > len(variables) or k < 0:
-        raise ValueError("cannot select k={} from {} variables".format(k, len(variables)))
+        raise ValueError(f"cannot select k={k} from {len(variables)} variables")
 
     # (\sum_i x_i - k)^2
     #     = \sum_i x_i \sum_j x_j - 2k\sum_i x_i + k^2

@@ -80,7 +80,7 @@ class TestFixedVariableComposite(unittest.TestCase):
         gse = response_exact.first.energy
 
         sampler = PolyFixedVariableComposite(ExactPolySolver())
-        fixed_variables = {k: v for k, v in gs.items()}
+        fixed_variables = dict(gs.items())
         response = sampler.sample_poly(poly, fixed_variables=fixed_variables)
 
         self.assertIsInstance(response, SampleSet)

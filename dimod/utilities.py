@@ -514,20 +514,21 @@ def _astypearrays(arrays, requirements, min_itemsize, allowed_types):
         descriptors = []
         if np.floating in allowed_types:
             descriptors.append('floating')
-        if np.integer in allowed_types:
+        if (
+            np.integer not in allowed_types
+            and np.unsignedinteger in allowed_types
+            and np.signedinteger in allowed_types
+            or np.integer in allowed_types
+        ):
             descriptors.append('integer')
         elif np.unsignedinteger in allowed_types:
-            if np.signedinteger in allowed_types:
-                descriptors.append('integer')
-            else:
-                descriptors.append('unsigned integer')
+            descriptors.append('unsigned integer')
         elif np.signedinteger in allowed_types:
             descriptors.append('signed integer')
 
         raise TypeError(
-            "Cannot safely cast arrays to {} (given {})".format(
-                ', '.join(descriptors),
-                ', '.join(arr.dtype.name for arr in arrays)))
+            f"Cannot safely cast arrays to {', '.join(descriptors)} (given {', '.join(arr.dtype.name for arr in arrays)})"
+        )
 
     if min_itemsize is not None:
         if min_itemsize >= 1:
@@ -550,10 +551,7 @@ def _astypearrays(arrays, requirements, min_itemsize, allowed_types):
     arrays = tuple(np.require(arr, dtype=dtype, requirements=requirements)
                    for arr in arrays)
 
-    if len(arrays) > 1:
-        return arrays
-    else:
-        return arrays[0]
+    return arrays if len(arrays) > 1 else arrays[0]
 
 
 # Not a public function (yet)

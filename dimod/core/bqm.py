@@ -74,7 +74,7 @@ class Adjacency(BQMView):
     """
     def __getitem__(self, v):
         if not self._bqm.has_variable(v):
-            raise KeyError('{} is not a variable'.format(v))
+            raise KeyError(f'{v} is not a variable')
         return Neighborhood(self._bqm, v)
 
     def __iter__(self):
@@ -87,7 +87,7 @@ class Adjacency(BQMView):
 class ShapeableAdjacency(Adjacency):
     def __getitem__(self, v):
         if not self._bqm.has_variable(v):
-            raise KeyError('{} is not a variable'.format(v))
+            raise KeyError(f'{v} is not a variable')
         return ShapeableNeighborhood(self._bqm, v)
 
 
@@ -122,10 +122,7 @@ class Neighborhood(BQMView):
 
         generator = (b for _, _, b in self._bqm.iter_quadratic(self._var))
 
-        if default is None:
-            return max(generator)
-        else:
-            return max(generator, default=default)
+        return max(generator) if default is None else max(generator, default=default)
 
     def min(self, default=None):
         """The minimum quadratic bias in the neighborhood."""
@@ -136,10 +133,7 @@ class Neighborhood(BQMView):
 
         generator = (b for _, _, b in self._bqm.iter_quadratic(self._var))
 
-        if default is None:
-            return min(generator)
-        else:
-            return min(generator, default=default)
+        return min(generator) if default is None else min(generator, default=default)
 
     def sum(self, start=0):
         """The sum of the quadratic biases in the neighborhood."""
@@ -852,14 +846,10 @@ class BQM(metaclass=abc.ABCMeta):
         """
 
         def parse_range(r):
-            if isinstance(r, Number):
-                return -abs(r), abs(r)
-            return r
+            return (-abs(r), abs(r)) if isinstance(r, Number) else r
 
         def min_and_max(iterable):
-            if not iterable:
-                return 0, 0
-            return min(iterable), max(iterable)
+            return (min(iterable), max(iterable)) if iterable else (0, 0)
 
         if ignored_variables is None:
             ignored_variables = set()
@@ -918,9 +908,10 @@ class BQM(metaclass=abc.ABCMeta):
         if not inplace:
             return self.copy().relabel_variables_as_integers(inplace=True)
 
-        mapping = dict((v, i) for i, v in enumerate(self.variables) if i != v)
-        return (self.relabel_variables(mapping, inplace=True),
-                dict((i, v) for v, i in mapping.items()))
+        mapping = {v: i for i, v in enumerate(self.variables) if i != v}
+        return self.relabel_variables(mapping, inplace=True), {
+            i: v for v, i in mapping.items()
+        }
 
     def scale(self, scalar, ignored_variables=None, ignored_interactions=None,
               ignore_offset=False):
@@ -1201,7 +1192,7 @@ class BQM(metaclass=abc.ABCMeta):
 
         """
         qubo = dict(self.binary.quadratic)
-        qubo.update(((v, v), bias) for v, bias in self.binary.linear.items())
+        qubo |= (((v, v), bias) for v, bias in self.binary.linear.items())
         return qubo, self.binary.offset
 
 
@@ -1370,14 +1361,15 @@ class ShapeableBQM(BQM):
         """
 
         if value not in self.vartype.value:
-            raise ValueError("expected value to be in {}, received {} "
-                             "instead".format(self.vartype.value, value))
+            raise ValueError(
+                f"expected value to be in {self.vartype.value}, received {value} instead"
+            )
 
         try:
             for u, bias in self.adj[v].items():
                 self.linear[u] += bias*value
         except KeyError:
-            raise ValueError('{} is not a variable'.format(v))
+            raise ValueError(f'{v} is not a variable')
 
         self.offset += value*self.linear[v]
         self.remove_variable(v)
@@ -1449,8 +1441,7 @@ class VartypeView(BQM):
         return self._bqm.num_variables
 
     def change_vartype(self, *args, **kwargs):
-        msg = '{} can only be {}-valued'.format(type(self).__name__,
-                                                self.vartype.name)
+        msg = f'{type(self).__name__} can only be {self.vartype.name}-valued'
         raise NotImplementedError(msg)
 
     def degree(self, *args, **kwargs):

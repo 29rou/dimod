@@ -341,20 +341,13 @@ class BinaryQuadraticModel(QuadraticViewsMixin):
         return NotImplemented
 
     def __eq__(self, other):
-        if isinstance(other, Number):
-            return Eq(self, other)
-        # support equality for backwards compatibility
-        return self.is_equal(other)
+        return Eq(self, other) if isinstance(other, Number) else self.is_equal(other)
 
     def __ge__(self, other: Bias):
-        if isinstance(other, Number):
-            return Ge(self, other)
-        return NotImplemented
+        return Ge(self, other) if isinstance(other, Number) else NotImplemented
 
     def __le__(self, other: Bias):
-        if isinstance(other, Number):
-            return Le(self, other)
-        return NotImplemented
+        return Le(self, other) if isinstance(other, Number) else NotImplemented
 
     def __ne__(self, other):
         return not self.is_equal(other)
@@ -572,8 +565,7 @@ class BinaryQuadraticModel(QuadraticViewsMixin):
         if isinstance(terms, Iterator):
             terms = list(terms)
 
-        if int(constant) != constant or int(lb) != lb or int(ub) != ub or any(
-                int(bias) != bias for _, bias in terms):
+        if False or False or False or any(int(bias) != bias for _, bias in terms):
             warnings.warn("For constraints with fractional coefficients, "
                           "multiply both sides of the inequality by an "
                           "appropriate factor of ten to attain or "
@@ -603,12 +595,11 @@ class BinaryQuadraticModel(QuadraticViewsMixin):
             return []
         else:
             slack_terms = []
-            zero_constraint = False
-            if cross_zero:
-                if lb_c > 0 or ub_c < 0:
-                    if ub_c-slack_upper_bound > 0:
-                        zero_constraint = True
-
+            zero_constraint = (
+                cross_zero
+                and (lb_c > 0 or ub_c < 0)
+                and ub_c - slack_upper_bound > 0
+            )
             num_slack = int(np.floor(np.log2(slack_upper_bound)))
             slack_coefficients = [2 ** j for j in range(num_slack)]
             if slack_upper_bound - 2 ** num_slack >= 0:
@@ -868,14 +859,15 @@ class BinaryQuadraticModel(QuadraticViewsMixin):
         """
 
         if value not in self.vartype.value:
-            raise ValueError("expected value to be in {}, received {} "
-                             "instead".format(self.vartype.value, value))
+            raise ValueError(
+                f"expected value to be in {self.vartype.value}, received {value} instead"
+            )
 
         try:
             for u, bias in self.adj[v].items():
                 self.linear[u] += bias*value
         except KeyError:
-            raise ValueError('{} is not a variable'.format(v))
+            raise ValueError(f'{v} is not a variable')
 
         self.offset += value*self.linear[v]
         self.remove_variable(v)
@@ -935,11 +927,7 @@ class BinaryQuadraticModel(QuadraticViewsMixin):
         The inverse of :meth:`~BinaryQuadraticModel.to_file`.
 
         """
-        if isinstance(fp, ByteString):
-            file_like: BinaryIO = _BytesIO(fp)  # type: ignore[assignment]
-        else:
-            file_like = fp
-
+        file_like = _BytesIO(fp) if isinstance(fp, ByteString) else fp
         header_info = read_header(file_like, BQM_MAGIC_PREFIX)
         version = header_info.version
         data = header_info.data
@@ -1001,7 +989,6 @@ class BinaryQuadraticModel(QuadraticViewsMixin):
 
                 bqm.data.add_quadratic_from_arrays(irow, icol, biases)
 
-        # labels
         if data['variables']:
             if version < (2, 0):
                 # the variables are in the header
@@ -1240,14 +1227,10 @@ class BinaryQuadraticModel(QuadraticViewsMixin):
         """
 
         def parse_range(r):
-            if isinstance(r, Number):
-                return -abs(r), abs(r)
-            return r
+            return (-abs(r), abs(r)) if isinstance(r, Number) else r
 
         def min_and_max(iterable):
-            if not iterable:
-                return 0, 0
-            return min(iterable), max(iterable)
+            return (min(iterable), max(iterable)) if iterable else (0, 0)
 
         if ignored_variables is None:
             ignored_variables = set()
@@ -1754,7 +1737,7 @@ class BinaryQuadraticModel(QuadraticViewsMixin):
 
     def to_qubo(self) -> Tuple[Mapping[Tuple[Variable, Variable], Bias], Bias]:
         qubo = dict(self.binary.quadratic)
-        qubo.update(((v, v), bias) for v, bias in self.binary.linear.items())
+        qubo |= (((v, v), bias) for v, bias in self.binary.linear.items())
         return qubo, self.binary.offset
 
     def update(self, other):
@@ -1865,18 +1848,15 @@ def as_bqm(*args, cls: None = None, copy: bool = False,
                       " as of dimod 0.10.0 and does nothing.",
                       DeprecationWarning, stacklevel=2)
 
-    if not copy:
-        # the only cases we don't copy in are when the dtype and vartype match
-        # a given bqm
-        if isinstance(args[0], BinaryQuadraticModel):
-            bqm = args[0]
-            if dtype is None or np.dtype(dtype) == bqm.dtype:
-                if len(args) == 1:
+    if not copy and isinstance(args[0], BinaryQuadraticModel):
+        bqm = args[0]
+        if dtype is None or np.dtype(dtype) == bqm.dtype:
+            if len(args) == 1:
+                return bqm
+            elif len(args) == 2:
+                vartype = args[1]
+                if bqm.vartype is as_vartype(vartype):
                     return bqm
-                elif len(args) == 2:
-                    vartype = args[1]
-                    if bqm.vartype is as_vartype(vartype):
-                        return bqm
 
     return BinaryQuadraticModel(*args, dtype=dtype)
 

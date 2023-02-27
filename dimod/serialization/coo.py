@@ -121,15 +121,11 @@ def load(fp, cls=BinaryQuadraticModel, vartype=None):
     for line in fp:
         triplets.extend(pattern.findall(line))
 
-        vt = vartype_pattern.findall(line)
-        if vt:
+        if vt := vartype_pattern.findall(line):
             if vartype is None:
                 vartype = vt[0]
             else:
-                if isinstance(vartype, str):
-                    vartype = Vartype[vartype]
-                else:
-                    vartype = Vartype(vartype)
+                vartype = Vartype[vartype] if isinstance(vartype, str) else Vartype(vartype)
                 if Vartype[vt[0]] != vartype:
                     raise ValueError("vartypes from headers and/or inputs do not match")
 
@@ -152,7 +148,7 @@ def _iter_triplets(bqm, vartype_header):
         raise ValueError("only positive index-labeled binary quadratic models can be dumped to COOrdinate format")
 
     if vartype_header:
-        yield '# vartype=%s' % bqm.vartype.name
+        yield f'# vartype={bqm.vartype.name}'
 
     # developer note: we could (for some threshold sparseness) sort the neighborhoods,
     # but this is simple and probably sufficient

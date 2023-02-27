@@ -73,7 +73,7 @@ class SpinReversalTransformComposite(Sampler, Composite):
         self.children = [child]
 
         self.parameters = parameters = {'spin_reversal_variables': []}
-        parameters.update(child.parameters)
+        parameters |= child.parameters
 
         self.properties = {'child_properties': child.properties}
 
@@ -109,7 +109,7 @@ class SpinReversalTransformComposite(Sampler, Composite):
         flipped_bqm = bqm.copy()
         transform = {v: False for v in bqm.variables}
 
-        for ii in range(num_spin_reversal_transforms):
+        for _ in range(num_spin_reversal_transforms):
             # flip each variable with a 50% chance
             for v in bqm.variables:
                 if random() > .5:
@@ -121,11 +121,11 @@ class SpinReversalTransformComposite(Sampler, Composite):
             tf_idxs = [flipped_response.variables.index(v)
                        for v, flip in transform.items() if flip]
 
-            if bqm.vartype is Vartype.SPIN:
-                flipped_response.record.sample[:, tf_idxs] = -1 * flipped_response.record.sample[:, tf_idxs]
-            else:
-                flipped_response.record.sample[:, tf_idxs] = 1 - flipped_response.record.sample[:, tf_idxs]
-
+            flipped_response.record.sample[:, tf_idxs] = (
+                -1 * flipped_response.record.sample[:, tf_idxs]
+                if bqm.vartype is Vartype.SPIN
+                else 1 - flipped_response.record.sample[:, tf_idxs]
+            )
             responses.append(flipped_response)
 
         return concatenate(responses)

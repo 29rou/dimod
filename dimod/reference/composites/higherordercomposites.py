@@ -219,13 +219,15 @@ def penalty_satisfaction(response, bqm):
     if len(bqm.info['reduction']) == 0:
         return np.array([1] * len(record.sample))
 
-    penalty_vector = np.prod([record.sample[:, label_to_idx(qi)] *
-                              record.sample[:, label_to_idx(qj)]
-                              == record.sample[:,
-                                 label_to_idx(valdict['product'])]
-                              for (qi, qj), valdict in
-                              bqm.info['reduction'].items()], axis=0)
-    return penalty_vector
+    return np.prod(
+        [
+            record.sample[:, label_to_idx(qi)]
+            * record.sample[:, label_to_idx(qj)]
+            == record.sample[:, label_to_idx(valdict['product'])]
+            for (qi, qj), valdict in bqm.info['reduction'].items()
+        ],
+        axis=0,
+    )
 
 
 def polymorph_response(response, poly, bqm,
@@ -446,7 +448,7 @@ class PolyTruncateComposite(ComposedPolySampler):
     def __init__(self, child_sampler, n, sorted_by='energy', aggregate=False):
 
         if n < 1:
-            raise ValueError('n should be a positive integer, recived {}'.format(n))
+            raise ValueError(f'n should be a positive integer, recived {n}')
 
         self._children = [child_sampler]
         self._truncate_kwargs = dict(n=n, sorted_by=sorted_by)
@@ -546,24 +548,19 @@ class PolyFixedVariableComposite(ComposedPolySampler):
 
         child = self.child
         if fixed_variables is None:
-            sampleset = child.sample_poly(poly, **parameters)
-            return sampleset
+            return child.sample_poly(poly, **parameters)
+        poly_copy = fix_variables(poly, fixed_variables)
+        sampleset = child.sample_poly(poly_copy, **parameters)
+        if len(sampleset):
+            return append_variables(sampleset, fixed_variables)
+        elif fixed_variables:
+            return type(sampleset).from_samples_bqm(fixed_variables, bqm=poly)
         else:
-            poly_copy = fix_variables(poly, fixed_variables)
-            sampleset = child.sample_poly(poly_copy, **parameters)
-            if len(sampleset):
-                return append_variables(sampleset, fixed_variables)
-            elif fixed_variables:
-                return type(sampleset).from_samples_bqm(fixed_variables, bqm=poly)
-            else:
-                return sampleset
+            return sampleset
 
 
 def fix_variables(poly, fixed_variables):
-    if () in poly.keys():
-        offset = poly[()]
-    else:
-        offset = 0.0
+    offset = poly[()] if () in poly.keys() else 0.0
     poly_copy = defaultdict(float)
     for k, v in poly.items():
         k = set(k)
@@ -571,8 +568,7 @@ def fix_variables(poly, fixed_variables):
             if var in k:
                 k -= {var}
                 v *= value
-        k = frozenset(k)
-        if len(k) > 0:
+        if k := frozenset(k):
             poly_copy[k] += v
         else:
             offset += v

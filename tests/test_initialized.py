@@ -36,8 +36,10 @@ class TestGenerators(unittest.TestCase):
             num_reads=10)
         self.assertEqual(len(init.initial_states), 10)
         self.assertEqual(init.num_reads, 10)
-        self.assertEqual(list(init.initial_states.samples(sorted_by=None)[0:2]),
-                         self.initial_states)
+        self.assertEqual(
+            list(init.initial_states.samples(sorted_by=None)[:2]),
+            self.initial_states,
+        )
 
     def test_2_fixed_8_random_explicit(self):
         init = Initialized().parse_initial_states(
@@ -47,8 +49,10 @@ class TestGenerators(unittest.TestCase):
             initial_states_generator='random')
         self.assertEqual(len(init.initial_states), 10)
         self.assertEqual(init.num_reads, 10)
-        self.assertEqual(list(init.initial_states.samples(sorted_by=None)[0:2]),
-                         self.initial_states)
+        self.assertEqual(
+            list(init.initial_states.samples(sorted_by=None)[:2]),
+            self.initial_states,
+        )
 
     def test_all_random(self):
         init = Initialized().parse_initial_states(
@@ -82,8 +86,10 @@ class TestGenerators(unittest.TestCase):
             )
         self.assertEqual(len(init.initial_states), 1)
         self.assertEqual(init.num_reads, 1)
-        self.assertEqual(list(init.initial_states.samples(sorted_by=None)[0:1]),
-                         self.initial_states[:1])
+        self.assertEqual(
+            list(init.initial_states.samples(sorted_by=None)[:1]),
+            self.initial_states[:1],
+        )
 
         init = Initialized().parse_initial_states(
             bqm=self.bqm,
@@ -93,8 +99,10 @@ class TestGenerators(unittest.TestCase):
             )
         self.assertEqual(len(init.initial_states), 1)
         self.assertEqual(init.num_reads, 1)
-        self.assertEqual(list(init.initial_states.samples(sorted_by=None)[0:1]),
-                         self.initial_states[:1])
+        self.assertEqual(
+            list(init.initial_states.samples(sorted_by=None)[:1]),
+            self.initial_states[:1],
+        )
 
         init = Initialized().parse_initial_states(
             bqm=self.bqm,
@@ -104,8 +112,10 @@ class TestGenerators(unittest.TestCase):
             )
         self.assertEqual(len(init.initial_states), 1)
         self.assertEqual(init.num_reads, 1)
-        self.assertEqual(list(init.initial_states.samples(sorted_by=None)[0:1]),
-                         self.initial_states[:1])
+        self.assertEqual(
+            list(init.initial_states.samples(sorted_by=None)[:1]),
+            self.initial_states[:1],
+        )
 
     def test_tile_2_to_5(self):
         init = Initialized().parse_initial_states(
@@ -117,8 +127,10 @@ class TestGenerators(unittest.TestCase):
 
         self.assertEqual(len(init.initial_states), 5)
         self.assertEqual(init.num_reads, 5)
-        self.assertEqual(list(init.initial_states.samples(sorted_by=None)[0:2]),
-                         self.initial_states)
+        self.assertEqual(
+            list(init.initial_states.samples(sorted_by=None)[:2]),
+            self.initial_states,
+        )
         np.testing.assert_array_equal(init.initial_states.record.sample[0:2, :],
                                       init.initial_states.record.sample[2:4, :])
         np.testing.assert_array_equal(init.initial_states.record.sample[0, :],
@@ -133,8 +145,10 @@ class TestGenerators(unittest.TestCase):
             )
         self.assertEqual(len(init.initial_states), 10)
         self.assertEqual(init.num_reads, 10)
-        self.assertEqual(list(init.initial_states.samples(sorted_by=None)[0:2]),
-                         self.initial_states)
+        self.assertEqual(
+            list(init.initial_states.samples(sorted_by=None)[:2]),
+            self.initial_states,
+        )
 
         np.testing.assert_array_equal(init.initial_states.record.sample[0:2, :],
                                       init.initial_states.record.sample[2:4, :])

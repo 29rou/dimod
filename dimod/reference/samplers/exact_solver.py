@@ -96,8 +96,7 @@ class ExactSolver(Sampler):
         if bqm.vartype is Vartype.SPIN:
             samples = 2*samples - 1
 
-        response = SampleSet.from_samples_bqm((samples, list(bqm.variables)), bqm)
-        return response
+        return SampleSet.from_samples_bqm((samples, list(bqm.variables)), bqm)
 
 
 class ExactPolySolver(PolySampler):
@@ -190,16 +189,15 @@ class ExactDQMSolver():
 
         """
         Sampler.remove_unknown_kwargs(self, **kwargs)
-        
+
         n = dqm.num_variables()
         if n == 0:
             return SampleSet.from_samples([], 'DISCRETE', energy=[])
 
         possible_samples = as_samples((_all_cases_dqm(dqm), list(dqm.variables)))
         energies = dqm.energies(possible_samples)
-        
-        response = SampleSet.from_samples(possible_samples, 'DISCRETE', energies)
-        return response
+
+        return SampleSet.from_samples(possible_samples, 'DISCRETE', energies)
 
 
 def _graycode(bqm):
@@ -226,7 +224,5 @@ def _all_cases_dqm(dqm):
     # developer note: there may be better ways to do this, but because we're
     # limited in performance by the energy calculation, this is probably fine
 
-    cases = [range(dqm.num_cases(v)) for v in dqm.variables] 
-    combinations = np.array(np.meshgrid(*cases)).T.reshape(-1,dqm.num_variables())
-    
-    return combinations
+    cases = [range(dqm.num_cases(v)) for v in dqm.variables]
+    return np.array(np.meshgrid(*cases)).T.reshape(-1,dqm.num_variables())

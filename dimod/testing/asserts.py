@@ -273,16 +273,14 @@ def assert_bqm_almost_equal(actual, desired, places=7,
     # vartype should match
     assert actual.vartype is desired.vartype, "unlike vartype"
 
-    # variables should match
-    variables_diff = set(actual.variables) ^ set(desired.variables)
-    if variables_diff:
+    if variables_diff := set(actual.variables) ^ set(desired.variables):
         v = variables_diff.pop()
         msg = "{!r} is not a shared variable".format(v)
         raise AssertionError(msg)
 
     # offset
     if round(actual.offset - desired.offset, places):
-        msg = 'offsets {} != {}'.format(desired.offset, actual.offset)
+        msg = f'offsets {desired.offset} != {actual.offset}'
         raise AssertionError(msg)
 
     # linear biases - we already checked variables

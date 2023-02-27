@@ -166,7 +166,7 @@ class TestIsingToQubo(unittest.TestCase):
         self.assertEqual(offset, 100)
 
     def test_typical(self):
-        h = {i: v for i, v in enumerate([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4])}
+        h = dict(enumerate([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4]))
         j = {(0, 5): 2, (0, 8): 4, (1, 4): -5, (1, 7): 1, (2, 0): 5,
              (2, 1): 4, (3, 0): -1, (3, 6): -3, (3, 8): 3, (4, 0): 2, (4, 7): 3,
              (4, 9): 3, (5, 1): 3, (6, 5): -4, (6, 7): -4, (7, 1): -4,
@@ -189,8 +189,7 @@ class TestIsingToQubo(unittest.TestCase):
         self.assertEqual(offset, 2)
 
     def test_energy(self):
-        h = {v: v for v in range(0, 100, 2)}
-        h.update({v: -(1 / v) for v in range(1, 100, 2)})
+        h = {v: v for v in range(0, 100, 2)} | {v: -(1 / v) for v in range(1, 100, 2)}
         J = {(u, v): 2 * (u / 3) + v ** .5 for (u, v) in itertools.combinations(range(100), 2)}
 
         spin_sample = {v: 1 if v % 2 else -1 for v in h}
@@ -257,7 +256,7 @@ class TestQuboToIsing(unittest.TestCase):
 
 class TestUtilitiesIntegration(unittest.TestCase):
     def test_start_from_binary(self):
-        h = {i: v for i, v in enumerate([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4])}
+        h = dict(enumerate([-5, -4, -3, -2, -1, 0, 1, 2, 3, 4]))
         j = {(0, 5): 2, (0, 8): 4, (1, 4): -5, (1, 7): 1, (2, 0): 5,
              (2, 1): 4, (3, 0): -1, (3, 6): -3, (3, 8): 3, (4, 0): 2, (4, 7): 3,
              (4, 9): 3, (5, 1): 3, (6, 5): -4, (6, 7): -4, (7, 1): -4,
@@ -301,8 +300,12 @@ def normalized_matrix(mat):
         return x[0]
 
     smat = sorted(((sorted(k), v) for k, v in mat.items()), key=key_fn)
-    return dict((tuple(k), s) for k, g in groupby(smat, key=key_fn) for s in
-                [sum(v for _, v in g)] if s != 0)
+    return {
+        tuple(k): s
+        for k, g in groupby(smat, key=key_fn)
+        for s in [sum(v for _, v in g)]
+        if s != 0
+    }
 
 
 class TestChildStructureDFS(unittest.TestCase):

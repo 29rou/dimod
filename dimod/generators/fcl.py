@@ -173,7 +173,6 @@ def _random_cycle(adj, random_state):
         if u in visited:
             # if we've seen this neighbour, then we have a cycle starting from it
             return walk[visited[u]:]
-        else:
-            # add to walk and keep moving
-            walk.append(u)
-            visited[u] = len(visited)
+        # add to walk and keep moving
+        walk.append(u)
+        visited[u] = len(visited)

@@ -70,9 +70,7 @@ class TestBug(unittest.TestCase):
         rng = np.random.default_rng(782)
 
         dqm1 = dimod.DiscreteQuadraticModel()
-        x = {}
-        for i in range(10):
-            x[i] = dqm1.add_variable(5)
+        x = {i: dqm1.add_variable(5) for i in range(10)}
         for c in range(5):
             dqm1.add_linear_equality_constraint(((x[i], c, rng.normal())
                                              for i in range(10)),
@@ -255,13 +253,14 @@ _twovar.set_quadratic(0, 1, {(0, 1): 1.5, (3, 4): 1})
 
 _random = gnp_random_dqm(5, [4, 5, 2, 1, 10], .5, .5, seed=23)
 
-_kwargs = [('default', dict()),
-           ('spool_size=0', dict(spool_size=0)),
-           ('spool_size=10', dict(spool_size=10)),
-           ('compress=True', dict(compress=True)),
-           ('compress=False', dict(compress=False)),
-           ('spool_size=0,compress=True', dict(spool_size=0, compress=True))
-           ]
+_kwargs = [
+    ('default', {}),
+    ('spool_size=0', dict(spool_size=0)),
+    ('spool_size=10', dict(spool_size=10)),
+    ('compress=True', dict(compress=True)),
+    ('compress=False', dict(compress=False)),
+    ('spool_size=0,compress=True', dict(spool_size=0, compress=True)),
+]
 
 file_parameterized = [('_'.join([dname, kname]), dqm, kwargs)
                       for dname, dqm in [('empty', _empty),
@@ -424,9 +423,8 @@ class TestQuadratic(unittest.TestCase):
         np.testing.assert_array_equal(dqm.get_quadratic('a', 'b', array=True),
                                       np.zeros((5, 10)))
 
-        for ca in range(5):
-            for cb in range(10):
-                self.assertEqual(dqm.get_quadratic_case('a', ca, 'b', cb), 0)
+        for ca, cb in itertools.product(range(5), range(10)):
+            self.assertEqual(dqm.get_quadratic_case('a', ca, 'b', cb), 0)
 
         dqm.set_quadratic_case('a', 2, 'b', 8, .5)
         dqm.set_quadratic_case('b', 3, 'a', 4, -7)
@@ -485,22 +483,22 @@ class TestConstraint(unittest.TestCase):
         dqm = dimod.DQM()
         num_variables = 2
         num_cases = 3
-        x = {}
-        for i in range(num_variables):
-            x[i] = dqm.add_variable(num_cases, label='x_{i}'.format(i=i))
-
+        x = {
+            i: dqm.add_variable(num_cases, label='x_{i}'.format(i=i))
+            for i in range(num_variables)
+        }
         for c in range(num_cases):
             dqm.add_linear_equality_constraint(
                 [(x[i], c, 1.0) for i in range(num_variables)],
                 lagrange_multiplier=1.0, constant=-1.0)
 
-        for i in x:
+        for i, value in x.items():
             for case in range(num_cases):
-                self.assertEqual(dqm.get_linear_case(x[i], case), -1)
-            for j in x:
+                self.assertEqual(dqm.get_linear_case(value, case), -1)
+            for j, value_ in x.items():
                 if j > i:
                     for case in range(num_cases):
-                        self.assertEqual(dqm.get_quadratic_case(x[i], case, x[j], case), 2.0)
+                        self.assertEqual(dqm.get_quadratic_case(x[i], case, value_, case), 2.0)
 
     def test_more_constraint(self):
         dqm = dimod.DQM()
@@ -652,12 +650,13 @@ class TestConstraint(unittest.TestCase):
                                (c, b) for v, c, b in expression + slack_terms}
         for cx, cs1, cs2, cs3 in itertools.product(
                 range(5), range(10), range(10), range(7)):
-            s = constant
             state = {'x': cx, 'slack_ineq_0_0': cs1, 'slack_ineq_0_1': cs2,
                      'slack_ineq_0_2': cs3}
-            for v, cv, bias in expression + slack_terms:
-                if expression_dict[v, cv][0] == state[v]:
-                    s += bias
+            s = constant + sum(
+                bias
+                for v, cv, bias in expression + slack_terms
+                if expression_dict[v, cv][0] == state[v]
+            )
             self.assertAlmostEqual(dqm.energy(state), s ** 2)
 
     def test_random_constraint(self):
@@ -734,10 +733,11 @@ class TestConstraint(unittest.TestCase):
 
         for case_values in itertools.product(*(range(c) for c in cases)):
             state = {i: case_values[i] for i in range(num_variables)}
-            s = constant
-            for v, cv, bias in expression1:
-                if expression_dict1[v][0] == state[v]:
-                    s += bias
+            s = constant + sum(
+                bias
+                for v, cv, bias in expression1
+                if expression_dict1[v][0] == state[v]
+            )
             for v, cv, bias in expression2:
                 if expression_dict2[v][0] == state[v]:
                     s += bias
@@ -765,10 +765,11 @@ class TestConstraint(unittest.TestCase):
 
         for case_values in itertools.product(*(range(c) for c in cases)):
             state = {i: case_values[i] for i in range(num_variables)}
-            s = constant
-            for v, cv, bias in expression1:
-                if expression_dict1[v][0] == state[v]:
-                    s += bias
+            s = constant + sum(
+                bias
+                for v, cv, bias in expression1
+                if expression_dict1[v][0] == state[v]
+            )
             for v, cv, bias in expression2:
                 if expression_dict2[v][0] == state[v]:
                     s += bias
@@ -846,10 +847,9 @@ class TestNumpyVectors(unittest.TestCase):
         ldata = range(9)
         irow = []
         icol = []
-        for ci in range(3):
-            for cj in range(3, 9):
-                irow.append(ci)
-                icol.append(cj)
+        for ci, cj in itertools.product(range(3), range(3, 9)):
+            irow.append(ci)
+            icol.append(cj)
         for ci in range(3, 6):
             for cj in range(3):
                 irow.append(ci)
@@ -857,10 +857,9 @@ class TestNumpyVectors(unittest.TestCase):
             for cj in range(6, 9):
                 irow.append(ci)
                 icol.append(cj)
-        for ci in range(6, 9):
-            for cj in range(6):
-                irow.append(ci)
-                icol.append(cj)
+        for ci, cj in itertools.product(range(6, 9), range(6)):
+            irow.append(ci)
+            icol.append(cj)
 
         # now add a single self-loop
         irow.append(3)

@@ -57,10 +57,7 @@ class DimodEncoder(json.JSONEncoder):
 
 
 def _is_sampleset_v2(obj):
-    if obj.get("type", "") != "SampleSet":
-        return False
-    # we could do more checking but probably this is sufficient
-    return True
+    return obj.get("type", "") == "SampleSet"
 
 
 def _is_bqm(obj):

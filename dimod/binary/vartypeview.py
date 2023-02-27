@@ -181,20 +181,18 @@ class VartypeView:
 
     @view_method
     def iter_neighborhood(self, v: Variable) -> Iterator[Tuple[Variable, Bias]]:
-        if self._vartype is BINARY:  # binary <- spin
-            for u, bias in self.data.iter_neighborhood(v):
+        for u, bias in self.data.iter_neighborhood(v):
+            if self._vartype is BINARY:  # binary <- spin
                 yield u, 4 * bias
-        else:  # spin <- binary
-            for u, bias in self.data.iter_neighborhood(v):
+            else:  # spin <- binary
                 yield u, bias / 4
 
     @view_method
     def iter_quadratic(self) -> Iterator[Tuple[Variable, Variable, Bias]]:
-        if self._vartype is BINARY:  # binary <- spin
-            for u, v, bias in self.data.iter_quadratic():
+        for u, v, bias in self.data.iter_quadratic():
+            if self._vartype is BINARY:  # binary <- spin
                 yield u, v, 4 * bias
-        else:  # spin <- binary
-            for u, v, bias in self.data.iter_quadratic():
+            else:  # spin <- binary
                 yield u, v, bias / 4
 
     def num_interactions(self):

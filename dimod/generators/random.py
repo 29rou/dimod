@@ -379,7 +379,7 @@ def ran_r(r, graph, cls=BinaryQuadraticModel, seed=None):
     ldata = np.zeros(len(variables))
 
     rvals = np.empty(2*r)
-    rvals[0:r] = range(-r, 0)
+    rvals[:r] = range(-r, 0)
     rvals[r:] = range(1, r+1)
     qdata = rnd.choice(rvals, size=len(irow))
 

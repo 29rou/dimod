@@ -150,11 +150,7 @@ class _SampleTable(object):
             length = max(map(lambda v: len(str(v)), vector), default=0)
             length = max(length, min(7, len(name)))
 
-            if len(name) > length:
-                header = name[:length-1] + '.'
-            else:
-                header = name.rjust(length)
-
+            header = f'{name[:length - 1]}.' if len(name) > length else name.rjust(length)
             def f(datum):
                 return str(getattr(datum, name)).rjust(length)
 
@@ -164,25 +160,17 @@ class _SampleTable(object):
             length = max(map(lambda v: len(fmt(v)), vector), default=0)
             length = max(length, min(7, len(name)))
 
-            if len(name) > length:
-                header = name[:length-1] + '.'
-            else:
-                header = name.rjust(length)
-
+            header = f'{name[:length - 1]}.' if len(name) > length else name.rjust(length)
             def f(datum):
                 return fmt(getattr(datum, name)).rjust(length)
 
         else:
             length = 7
-            if len(name) > length:
-                header = name[:length-1] + '.'
-            else:
-                header = name.rjust(length)
-
+            header = f'{name[:length - 1]}.' if len(name) > length else name.rjust(length)
             def f(datum):
                 r = repr(getattr(datum, name))
                 if len(r) > length:
-                    r = r[:length-3] + '...'
+                    r = f'{r[:length - 3]}...'
                 return r.rjust(length)
 
         self.append(header, f, _left=_left)
@@ -259,7 +247,7 @@ class Formatter(object):
             self._print_sampleset(obj, stream, **options)
             return
 
-        raise TypeError("cannot format type {}".format(type(obj)))
+        raise TypeError(f"cannot format type {type(obj)}")
 
     def _print_sampleset(self, sampleset, stream,
                          width, depth, sorted_by,
@@ -282,11 +270,12 @@ class Formatter(object):
 
         # add the footer
         stream.write('[')
-        footer = [repr(sampleset.vartype.name),
-                  '{} rows'.format(len(sampleset)),
-                  '{} samples'.format(sampleset.record.num_occurrences.sum()),
-                  '{} variables'.format(len(sampleset.variables))
-                  ]
+        footer = [
+            repr(sampleset.vartype.name),
+            f'{len(sampleset)} rows',
+            f'{sampleset.record.num_occurrences.sum()} samples',
+            f'{len(sampleset.variables)} variables',
+        ]
         if sum(map(len, footer)) + (len(footer) - 1)*2 > width - 2:
             # if the footer won't fit in width
             stream.write(',\n '.join(footer))
@@ -350,10 +339,9 @@ class Formatter(object):
                 break
         table.rotate(num_added + 1)  # move the index back to the front
 
-        # finally any remaining space should be used for other fields. We assume
-        # at this point that deque looks like [idx variables energy num_occ. ...]
-        other_fields = set(sampleset.record.dtype.names).difference(sampleset._REQUIRED_FIELDS)
-        if other_fields:
+        if other_fields := set(sampleset.record.dtype.names).difference(
+            sampleset._REQUIRED_FIELDS
+        ):
             num_added = 0
             while len(other_fields):
                 name = min(other_fields, key=len)
@@ -368,7 +356,7 @@ class Formatter(object):
                     break
             else:
                 # we have no other fields to add
-                assert len(other_fields) == 0
+                assert not other_fields
                 table.pop()  # remove the summary
             table.rotate(-num_added)  # put index back at the front
 

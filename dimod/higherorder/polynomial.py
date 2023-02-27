@@ -101,11 +101,8 @@ class BinaryPolynomial(abc.MutableMapping):
             # when SPIN-valued, s^2 == 1, so we need to handle that case
             # in BINARY, x^2 == x
             if len(fsterm) < len(term) and vartype is Vartype.SPIN:
-                new = set()
                 term = tuple(term)  # make sure it has .count
-                for v in fsterm:
-                    if term.count(v) % 2:
-                        new.add(v)
+                new = {v for v in fsterm if term.count(v) % 2}
                 fsterm = frozenset(new)
 
             if fsterm in terms:
@@ -135,10 +132,7 @@ class BinaryPolynomial(abc.MutableMapping):
         for term, bias in self.items():
             if bias and other[term] != bias:
                 return False
-        for term, bias in other.items():
-            if bias and self[term] != bias:
-                return False
-        return True
+        return not any(bias and self[term] != bias for term, bias in other.items())
 
     def __ne__(self, other):
         return not (self == other)
@@ -167,9 +161,7 @@ class BinaryPolynomial(abc.MutableMapping):
     @property
     def degree(self):
         """Degree of the polynomial."""
-        if len(self) == 0:
-            return 0
-        return max(map(len, self._terms))
+        return 0 if len(self) == 0 else max(map(len, self._terms))
 
     def copy(self):
         """Create a shallow copy."""
@@ -280,9 +272,7 @@ class BinaryPolynomial(abc.MutableMapping):
         """
 
         def parse_range(r):
-            if isinstance(r, Number):
-                return -abs(r), abs(r)
-            return r
+            return (-abs(r), abs(r)) if isinstance(r, Number) else r
 
         if ignored_terms is None:
             ignored_terms = set()
@@ -363,7 +353,7 @@ class BinaryPolynomial(abc.MutableMapping):
 
         """
         poly = {(k,): v for k, v in h.items()}
-        poly.update(J)
+        poly |= J
         if offset is not None:
             poly[frozenset([])] = offset
         return cls(poly, Vartype.SPIN)
@@ -453,11 +443,7 @@ class BinaryPolynomial(abc.MutableMapping):
 
         """
         if self.vartype is Vartype.BINARY:
-            if copy:
-                return self.copy()
-            else:
-                return self
-
+            return self.copy() if copy else self
         new = BinaryPolynomial({}, Vartype.BINARY)
 
         # s = 2x - 1
@@ -485,11 +471,7 @@ class BinaryPolynomial(abc.MutableMapping):
 
         """
         if self.vartype is Vartype.SPIN:
-            if copy:
-                return self.copy()
-            else:
-                return self
-
+            return self.copy() if copy else self
         new = BinaryPolynomial({}, Vartype.SPIN)
 
         # x = (s + 1) / 2

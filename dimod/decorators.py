@@ -151,7 +151,7 @@ def bqm_index_labelled_input(var_labels_arg_name, samples_arg_names):
                 raise TypeError('expected input to be a BinaryQuadraticModel')
             linear = bqm.linear
 
-            var_labels = kwargs.get(var_labels_arg_name, None)
+            var_labels = kwargs.get(var_labels_arg_name)
             has_samples_input = any(kwargs.get(arg_name, None) is not None
                                     for arg_name in samples_arg_names)
 
@@ -210,10 +210,10 @@ def bqm_structured(f):
             else:
                 raise TypeError("sampler does not have a structure property")
 
-        if not all(v in adjacency for v in bqm.linear):
+        if any(v not in adjacency for v in bqm.linear):
             # todo: better error message
             raise BinaryQuadraticModelStructureError("given bqm does not match the sampler's structure")
-        if not all(u in adjacency[v] for u, v in bqm.quadratic):
+        if any(u not in adjacency[v] for u, v in bqm.quadratic):
             # todo: better error message
             raise BinaryQuadraticModelStructureError("given bqm does not match the sampler's structure")
 
@@ -313,9 +313,7 @@ def vartype_argument(*arg_names):
 def _is_integer(a):
     if isinstance(a, int):
         return True
-    if hasattr(a, "is_integer") and a.is_integer():
-        return True
-    return False
+    return bool(hasattr(a, "is_integer") and a.is_integer())
 
 
 # we would like to do graph_argument(*arg_names, allow_None=False), but python2...
@@ -381,16 +379,14 @@ def graph_argument(*arg_names, **options):
                         # 2, so probably an edgelist. But we're dealing with
                         # only four objects so might as well check to be sure
                         nodes, edges = G
-                        if all(isinstance(e, abc.Sequence) and len(e) == 2 and
-                               (v in nodes for v in e) for e in edges):
-                            pass  # nodes, edges
-                        else:
+                        if not all(
+                            isinstance(e, abc.Sequence)
+                            and len(e) == 2
+                            and (v in nodes for v in e)
+                            for e in edges
+                        ):
                             # edgelist
                             kwargs[name] = (list(set().union(*G)), G)
-                    else:
-                        # nodes, edges
-                        pass
-
             elif allow_None and G is None:
                 # allow None to be passed through
                 kwargs[name] = G

@@ -145,7 +145,7 @@ class AdjDictBQM(ShapeableBQM):
         # implementation
         self._adj = adj = OrderedDict()
 
-        if len(args) == 0:
+        if not args:
             raise TypeError("A valid vartype or another bqm must be provided")
         if len(args) == 1:
             # BQM(bqm) or BQM(vartype)
@@ -237,9 +237,7 @@ class AdjDictBQM(ShapeableBQM):
             it = np.nditer(D, flags=['multi_index', 'refs_ok'], op_flags=['readonly'])
             while not it.finished:
                 u, v = it.multi_index
-                bias = it.value[()]
-
-                if bias:
+                if bias := it.value[()]:
                     if u == v and vartype is Vartype.SPIN:
                         # not += on off-chance it's mutable
                         offset = offset + bias
@@ -412,7 +410,7 @@ class AdjDictBQM(ShapeableBQM):
         try:
             return len(self._adj[v]) - 1
         except KeyError:
-            raise ValueError("{} is not a variable".format(v))
+            raise ValueError(f"{v} is not a variable")
 
     def get_linear(self, v):
         """Get the linear bias of the specified variable.
@@ -432,7 +430,7 @@ class AdjDictBQM(ShapeableBQM):
             return self._adj[v][v]
         except KeyError:
             pass
-        raise ValueError("{} is not a variable".format(v))
+        raise ValueError(f"{v} is not a variable")
 
     def get_quadratic(self, u, v, default=None):
         """Get the quadratic bias of the specified interaction.
@@ -459,14 +457,14 @@ class AdjDictBQM(ShapeableBQM):
 
         """
         if u == v:
-            raise ValueError("No interaction between {} and itself".format(u))
+            raise ValueError(f"No interaction between {u} and itself")
         try:
             return self._adj[u][v]
         except KeyError:
             pass
         if default is not None:
             return default
-        raise ValueError('No interaction between {} and {}'.format(u, v))
+        raise ValueError(f'No interaction between {u} and {v}')
 
     def iter_linear(self):
         """Iterate over the linear biases of the binary quadratic model.
@@ -555,13 +553,13 @@ class AdjDictBQM(ShapeableBQM):
 
         """
         if u == v:
-            raise ValueError("No interaction between {} and itself".format(u))
+            raise ValueError(f"No interaction between {u} and itself")
 
         try:
             self._adj[u].pop(v)
         except KeyError:
             # nothing pop
-            raise ValueError('No interaction between {} and {}'.format(u, v))
+            raise ValueError(f'No interaction between {u} and {v}')
 
         # want to raise an exception in the case that they got out of sync
         # as a sanity check
