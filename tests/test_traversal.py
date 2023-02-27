@@ -39,5 +39,6 @@ class TestConnectedComponents(unittest.TestCase):
         bqm = dimod.BQM.from_ising({}, {'ab': -1, 'ac': -1, 'de': -1})
 
         cc = list(dimod.connected_components(bqm))
-        self.assertIn(cc, [[set(['a', 'b', 'c']), set(['d', 'e'])],
-                           [set(['d', 'e']), set(['a', 'b', 'c'])]])
+        self.assertIn(
+            cc, [[{'a', 'b', 'c'}, {'d', 'e'}], [{'d', 'e'}, {'a', 'b', 'c'}]]
+        )

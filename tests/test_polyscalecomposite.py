@@ -34,9 +34,9 @@ class RangeLimitedSampler(dimod.PolySampler):
             raise RuntimeError
 
         samples = np.ones((num_reads, len(poly.variables))), list(poly.variables)
-        sampleset = dimod.SampleSet.from_samples(samples, vartype=poly.vartype,
-                                                 energy=poly.energies(samples))
-        return sampleset
+        return dimod.SampleSet.from_samples(
+            samples, vartype=poly.vartype, energy=poly.energies(samples)
+        )
 
 
 class TestConstruction(unittest.TestCase):
@@ -86,9 +86,7 @@ class TestSampleHising(unittest.TestCase):
         sampleset = sampler.sample_hising(h, J, discard_unsatisfied=True)
 
         for sample, energy in sampleset.data(['sample', 'energy']):
-            en = 0
-            for v, bias in h.items():
-                en += sample[v] * bias
+            en = sum(sample[v] * bias for v, bias in h.items())
             for term, bias in J.items():
                 val = bias
                 for v in term:

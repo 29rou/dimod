@@ -174,9 +174,7 @@ class QuadraticModel(QuadraticViewsMixin):
 
     def __rmul__(self, other: Bias) -> 'QuadraticModel':
         # should only miss on number
-        if isinstance(other, Number):
-            return self * other  # communative
-        return NotImplemented
+        return self * other if isinstance(other, Number) else NotImplemented
 
     def __neg__(self: 'QuadraticModel') -> 'QuadraticModel':
         new = self.copy()

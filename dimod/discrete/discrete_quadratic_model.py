@@ -221,8 +221,7 @@ class DiscreteQuadraticModel:
                                          lb: int = np.iinfo(np.int64).min,
                                          ub: int = 0,
                                          slack_method: str = "log2",
-                                         cross_zero: bool = False)\
-            -> LinearTriplets:
+                                         cross_zero: bool = False) -> LinearTriplets:
 
         """Add a linear inequality constraint as a quadratic objective.
 
@@ -277,8 +276,12 @@ class DiscreteQuadraticModel:
 
         if isinstance(terms, Iterator):
             terms = list(terms)
-        if int(constant) != constant or int(lb) != lb or int(ub) != ub or any(
-                int(bias) != bias for _, _, bias in terms):
+        if (
+            False
+            or False
+            or False
+            or any(int(bias) != bias for _, _, bias in terms)
+        ):
             warnings.warn("For constraints with fractional coefficients, "
                           "multiply both sides of the inequality by an "
                           "appropriate factor of ten to attain or "
@@ -308,12 +311,26 @@ class DiscreteQuadraticModel:
             return []
         else:
             slack_terms = []
-            zero_constraint = False
-            if cross_zero:
-                if lb_c > 0 or ub_c < 0:
-                    zero_constraint = True
+            zero_constraint = cross_zero and (lb_c > 0 or ub_c < 0)
+            if slack_method == "log10":
+                num_dqm_vars = int(np.ceil(np.log10(slack_upper_bound+1)))
+                for j in range(num_dqm_vars):
+                    slack_term = list(range(0, min(slack_upper_bound + 1,
+                                                   10 ** (j + 1)), 10 ** j))[1:]
+                    sv = (
+                        self.add_variable(
+                            len(slack_term) + 1, f'slack_{label}_{j}'
+                        )
+                        if j < num_dqm_vars - 1 or not zero_constraint
+                        else self.add_variable(
+                            len(slack_term) + 2, f'slack_{label}_{j}'
+                        )
+                    )
+                    slack_terms.extend((sv, i + 1, val) for i, val in enumerate(slack_term))
+                if zero_constraint:
+                    slack_terms.append((sv, len(slack_term) + 1, ub_c))
 
-            if slack_method == "log2":
+            elif slack_method == "log2":
                 num_slack = int(np.floor(np.log2(slack_upper_bound)))
                 slack_coefficients = [2 ** j for j in range(num_slack)]
                 if slack_upper_bound - 2 ** num_slack >= 0:
@@ -327,22 +344,6 @@ class DiscreteQuadraticModel:
                 if zero_constraint:
                     sv = self.add_variable(2, f'slack_{label}_{num_slack + 1}')
                     slack_terms.append((sv, 1, ub_c))
-
-            elif slack_method == "log10":
-                num_dqm_vars = int(np.ceil(np.log10(slack_upper_bound+1)))
-                for j in range(num_dqm_vars):
-                    slack_term = list(range(0, min(slack_upper_bound + 1,
-                                                   10 ** (j + 1)), 10 ** j))[1:]
-                    if j < num_dqm_vars - 1 or not zero_constraint:
-                        sv = self.add_variable(len(slack_term) + 1,
-                                               f'slack_{label}_{j}')
-                    else:
-                        sv = self.add_variable(len(slack_term) + 2,
-                                               f'slack_{label}_{j}')
-                    for i, val in enumerate(slack_term):
-                        slack_terms.append((sv, i + 1, val))
-                if zero_constraint:
-                    slack_terms.append((sv, len(slack_term) + 1, ub_c))
 
             self.add_linear_equality_constraint(terms + slack_terms,
                                                 lagrange_multiplier, -ub_c)
@@ -400,7 +401,7 @@ class DiscreteQuadraticModel:
                 "Given sample(s) have incorrect number of variables")
         if self.variables != labels:
             # need to reorder the samples
-            label_to_idx = dict((v, i) for i, v in enumerate(labels))
+            label_to_idx = {v: i for i, v in enumerate(labels)}
 
             try:
                 order = [label_to_idx[v] for v in self.variables]
@@ -416,8 +417,9 @@ class DiscreteQuadraticModel:
 
         magic = file_like.read(len(DATA_MAGIC_PREFIX))
         if magic != DATA_MAGIC_PREFIX:
-            raise ValueError("unknown file type, expected magic string {} but "
-                             "got {}".format(DATA_MAGIC_PREFIX, magic))
+            raise ValueError(
+                f"unknown file type, expected magic string {DATA_MAGIC_PREFIX} but got {magic}"
+            )
 
         length = np.frombuffer(file_like.read(4), '<u4')[0]
         start = file_like.tell()
@@ -532,7 +534,7 @@ class DiscreteQuadraticModel:
             for v in labels:
                 obj.variables._append(v)
         else:
-            for v in range(obj._cydqm.num_variables()):
+            for _ in range(obj._cydqm.num_variables()):
                 obj.variables._append()
 
         return obj
@@ -650,9 +652,11 @@ class DiscreteQuadraticModel:
                 dict: The mapping that will restore the original labels.
 
         """
-        if not inplace:
-            return self.copy().relabel_variables_as_integers(inplace=True)
-        return self, self.variables._relabel_as_integers()
+        return (
+            (self, self.variables._relabel_as_integers())
+            if inplace
+            else self.copy().relabel_variables_as_integers(inplace=True)
+        )
 
     def set_linear(self, v, biases):
         """Set the linear biases associated with `v`.
@@ -731,11 +735,7 @@ class DiscreteQuadraticModel:
 
         vectors = self.to_numpy_vectors(return_offset=True)
 
-        if compress:
-            save = np.savez_compressed
-        else:
-            save = np.savez
-
+        save = np.savez_compressed if compress else np.savez
         save(file,
             case_starts=vectors.case_starts,
             linear_biases=vectors.linear_biases,
@@ -1035,30 +1035,29 @@ class CaseLabelDQM(DQM):
         if isinstance(cases, int):
             return super().add_variable(cases, label=label)
 
+        if len(set(cases)) != len(cases):
+            raise ValueError('case labels are not unique')
+
+        if shared_labels:
+            var = super().add_variable(len(cases), label=label)
+
+            for k, case in enumerate(cases):
+                self._shared_label_case[var][case] = k
+                self._shared_case_label[var][k] = case
+
         else:
-            if len(set(cases)) != len(cases):
-                raise ValueError('case labels are not unique')
+            for case in cases:
+                if (case in self.variables) or (case in self._unique_label_case):
+                    raise ValueError(f'case label {case} is not unique')
 
-            if shared_labels:
-                var = super().add_variable(len(cases), label=label)
+            var = super().add_variable(len(cases), label=label)
+            self._unique_label_vars.add(var)
 
-                for k, case in enumerate(cases):
-                    self._shared_label_case[var][case] = k
-                    self._shared_case_label[var][k] = case
+            for k, case in enumerate(cases):
+                self._unique_label_case[case] = (var, k)
+                self._unique_case_label[(var, k)] = case
 
-            else:
-                for case in cases:
-                    if (case in self.variables) or (case in self._unique_label_case):
-                        raise ValueError(f'case label {case} is not unique')
-
-                var = super().add_variable(len(cases), label=label)
-                self._unique_label_vars.add(var)
-
-                for k, case in enumerate(cases):
-                    self._unique_label_case[case] = (var, k)
-                    self._unique_case_label[(var, k)] = case
-
-            return var
+        return var
 
     def _lookup_shared_case(self, v, case):
         """Translate shared case label `case` of variable `v` to integer.
@@ -1067,8 +1066,7 @@ class CaseLabelDQM(DQM):
             ValueError: If `case` of `v` is unknown.
 
         """
-        map_ = self._shared_label_case.get(v)
-        if map_:
+        if map_ := self._shared_label_case.get(v):
             if case not in map_:
                 raise ValueError(f'unknown case {case} of variable {v}')
             return map_[case]
@@ -1088,8 +1086,7 @@ class CaseLabelDQM(DQM):
                 If `v` is a unique case label, returns a float.
 
         """
-        v_k = self._unique_label_case.get(v)
-        if v_k:
+        if v_k := self._unique_label_case.get(v):
             return super().get_linear_case(*v_k)
         else:
             return super().get_linear(v)
@@ -1140,15 +1137,13 @@ class CaseLabelDQM(DQM):
             ValueError: If `u` is a unique case label and `v` is not.
 
         """
-        u_k = self._unique_label_case.get(u)
-        if u_k:
-            if v not in self._unique_label_case:
-                raise ValueError(f'unknown case label {v}')
-
-            v_m = self._unique_label_case[v]
-            return super().get_quadratic_case(*u_k, *v_m)
-        else:
+        if not (u_k := self._unique_label_case.get(u)):
             return super().get_quadratic(u, v)
+        if v not in self._unique_label_case:
+            raise ValueError(f'unknown case label {v}')
+
+        v_m = self._unique_label_case[v]
+        return super().get_quadratic_case(*u_k, *v_m)
 
     def get_quadratic_case(self, u, u_case, v, v_case):
         """The bias associated with the interaction between two cases of `u`
@@ -1183,8 +1178,7 @@ class CaseLabelDQM(DQM):
                 number.
 
         """
-        v_k = self._unique_label_case.get(v)
-        if v_k:
+        if v_k := self._unique_label_case.get(v):
             super().set_linear_case(*v_k, biases)
         else:
             super().set_linear(v, biases)
@@ -1229,8 +1223,7 @@ class CaseLabelDQM(DQM):
             ValueError: If `u` is a unique case label and `v` is not.
 
         """
-        u_k = self._unique_label_case.get(u)
-        if u_k:
+        if u_k := self._unique_label_case.get(u):
             if v not in self._unique_label_case:
                 raise ValueError(f'unknown case label {v}')
 
@@ -1270,8 +1263,7 @@ class CaseLabelDQM(DQM):
 
         """
         range_ = range(self.num_cases(v))
-        map_ = self._shared_case_label.get(v)
-        if map_:
+        if map_ := self._shared_case_label.get(v):
             return [map_[case] for case in range_]
 
         elif v in self._unique_label_vars:
@@ -1296,8 +1288,7 @@ class CaseLabelDQM(DQM):
         new_sample = {}
 
         for var, value in sample.items():
-            map_ = self._shared_case_label.get(var)
-            if map_:
+            if map_ := self._shared_case_label.get(var):
                 new_sample[var] = map_[value]
 
             elif var in self._unique_label_vars:

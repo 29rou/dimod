@@ -35,7 +35,7 @@ from dimod.vartypes import as_vartype, Vartype
 class pyBQM:
     """A pure-python BQM implementation for handling arbitrary bias types."""
     def __init__(self, vartype: VartypeLike):
-        self._adj: Dict[Variable, Dict[Variable, Any]] = dict()
+        self._adj: Dict[Variable, Dict[Variable, Any]] = {}
         self._vartype = as_vartype(vartype)
 
         self.offset = 0
@@ -53,7 +53,7 @@ class pyBQM:
         return self._vartype
 
     def add_linear(self, v: Variable, bias: Any):
-        self._adj.setdefault(v, dict())
+        self._adj.setdefault(v, {})
         zero = type(bias)()
         self._adj[v][v] = self._adj[v].get(v, zero) + bias
 
@@ -216,7 +216,7 @@ class pyBQM:
             return default
 
     def is_linear(self) -> bool:
-        return not any(len(Nv) > 1 for Nv in self._adj.values())
+        return all(len(Nv) <= 1 for Nv in self._adj.values())
 
     def iter_neighborhood(self, v: Variable) -> Iterator[Any]:
         try:
@@ -296,9 +296,9 @@ class pyBQM:
                 del adj[old]
 
     def relabel_variables_as_integers(self) -> Mapping[int, Variable]:
-        mapping = dict((v, i) for i, v in enumerate(self.variables) if i != v)
+        mapping = {v: i for i, v in enumerate(self.variables) if i != v}
         self.relabel_variables(mapping)
-        return dict((i, v) for v, i in mapping.items())
+        return {i: v for v, i in mapping.items()}
 
     def remove_variable(self, v: Optional[Variable] = None) -> Variable:
         if v is None:
@@ -325,7 +325,7 @@ class pyBQM:
             self.remove_variable()
 
     def set_linear(self, v: Variable, bias: Any):
-        self._adj.setdefault(v, dict())[v] = bias
+        self._adj.setdefault(v, {})[v] = bias
 
     def set_quadratic(self, u: Variable, v: Variable, bias: Any):
         if u == v:

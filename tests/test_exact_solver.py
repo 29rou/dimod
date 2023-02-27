@@ -125,9 +125,11 @@ class TestExactSolver(unittest.TestCase):
             self.assertAlmostEqual(energy, dimod.ising_energy(sample, h, J))
 
     def test_sample_qubo(self):
-        Q = {(0, 0): 0.0, (1, 1): 0.0, (2, 2): 0.0}
-        Q.update({(0, 1): -1.0, (1, 2): 1.0, (0, 2): 1.0})
-
+        Q = {(0, 0): 0.0, (1, 1): 0.0, (2, 2): 0.0} | {
+            (0, 1): -1.0,
+            (1, 2): 1.0,
+            (0, 2): 1.0,
+        }
         response = dimod.ExactSolver().sample_qubo(Q)
 
         # every possible conbination should be present
@@ -247,9 +249,11 @@ class TestExactPolySolver(unittest.TestCase):
         self.assertIs(response.vartype, dimod.SPIN)
 
     def test_sample_hubo(self):
-        Q = {(0, 0): 0.0, (1, 1): 0.0, (2, 2): 0.0}
-        Q.update({(0, 1): -1.0, (1, 2): 1.0, (0, 1, 2): 1.0})
-
+        Q = {(0, 0): 0.0, (1, 1): 0.0, (2, 2): 0.0} | {
+            (0, 1): -1.0,
+            (1, 2): 1.0,
+            (0, 1, 2): 1.0,
+        }
         response = dimod.ExactPolySolver().sample_hubo(Q)
 
         # every possible conbination should be present
@@ -277,9 +281,11 @@ class TestExactPolySolver(unittest.TestCase):
             self.assertAlmostEqual(energy, dimod.ising_energy(sample, h, J))
 
     def test_sample_qubo(self):
-        Q = {(0, 0): 0.0, (1, 1): 0.0, (2, 2): 0.0}
-        Q.update({(0, 1): -1.0, (1, 2): 1.0, (0, 2): 1.0})
-
+        Q = {(0, 0): 0.0, (1, 1): 0.0, (2, 2): 0.0} | {
+            (0, 1): -1.0,
+            (1, 2): 1.0,
+            (0, 2): 1.0,
+        }
         response = dimod.ExactPolySolver().sample_hubo(Q)
 
         # every possible conbination should be present

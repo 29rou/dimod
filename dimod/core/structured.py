@@ -108,16 +108,16 @@ class Structured(abc.ABC):
         keys are the nodes of the structured sampler and values are sets of all
         adjacent nodes for each key node.
         """
-        if not hasattr(self, '_adjacency'):
-            adjacency = {v: set() for v in self.nodelist}
-            for u, v in self.edgelist:
-                if v in adjacency[u]:
-                    raise ValueError("Each edge in edgelist must be unique")
-                adjacency[u].add(v)
-                adjacency[v].add(u)
-            self._adjacency = adjacency
-            return adjacency
-        return self._adjacency
+        if hasattr(self, '_adjacency'):
+            return self._adjacency
+        adjacency = {v: set() for v in self.nodelist}
+        for u, v in self.edgelist:
+            if v in adjacency[u]:
+                raise ValueError("Each edge in edgelist must be unique")
+            adjacency[u].add(v)
+            adjacency[v].add(u)
+        self._adjacency = adjacency
+        return adjacency
 
     @property
     def structure(self):

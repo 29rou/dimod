@@ -57,7 +57,7 @@ class TruncateComposite(ComposedSampler):
     def __init__(self, child_sampler, n, sorted_by='energy', aggregate=False):
 
         if n < 1:
-            raise ValueError('n should be a positive integer, recived {}'.format(n))
+            raise ValueError(f'n should be a positive integer, recived {n}')
 
         self._children = [child_sampler]
         self._truncate_kwargs = dict(n=n, sorted_by=sorted_by)

@@ -61,9 +61,9 @@ class NullSampler(Sampler):
         self.parameters = {}
         if parameters is not None:
             if isinstance(parameters, abc.Mapping):
-                self.parameters.update(parameters)
+                self.parameters |= parameters
             else:
-                self.parameters.update((param, []) for param in parameters)
+                self.parameters |= ((param, []) for param in parameters)
 
     def sample(self, bqm, **kwargs):
         """Return an empty sample set.

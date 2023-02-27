@@ -35,10 +35,11 @@ BQMs = dict(BinaryQuadraticModel=BinaryQuadraticModel,
             )
 
 
-BQM_x_VERSION = [('v{}.{}_{}'.format(version[0], version[1], cls.__name__),
-                  cls, version)
-                 for cls in BQMs.values()
-                 for version in SUPPORTED_VERSIONS]
+BQM_x_VERSION = [
+    (f'v{version[0]}.{version[1]}_{cls.__name__}', cls, version)
+    for cls in BQMs.values()
+    for version in SUPPORTED_VERSIONS
+]
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'data', 'fileview')
 

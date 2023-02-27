@@ -83,8 +83,7 @@ class TestMakeQuadratic(unittest.TestCase):
             reduced_energies = []
             for aux_config in itertools.product((-1, 1),
                                                 repeat=len(aux_variables)):
-                aux_sample = dict(zip(aux_variables, aux_config))
-                aux_sample.update(sample)
+                aux_sample = dict(zip(aux_variables, aux_config)) | sample
                 reduced_energies.append(bqm.energy(aux_sample))
 
             self.assertAlmostEqual(energy, min(reduced_energies))
@@ -106,8 +105,7 @@ class TestMakeQuadratic(unittest.TestCase):
             reduced_energies = []
             for aux_config in itertools.product((-1, 1),
                                                 repeat=len(aux_variables)):
-                aux_sample = dict(zip(aux_variables, aux_config))
-                aux_sample.update(sample)
+                aux_sample = dict(zip(aux_variables, aux_config)) | sample
                 reduced_energies.append(bqm.energy(aux_sample))
 
             self.assertAlmostEqual(energy, min(reduced_energies))
@@ -132,8 +130,7 @@ class TestMakeQuadratic(unittest.TestCase):
             reduced_energies = []
             for aux_config in itertools.product((-1, 1),
                                                 repeat=len(aux_variables)):
-                aux_sample = dict(zip(aux_variables, aux_config))
-                aux_sample.update(sample)
+                aux_sample = dict(zip(aux_variables, aux_config)) | sample
                 reduced_energies.append(bqm.energy(aux_sample))
 
             self.assertAlmostEqual(energy, min(reduced_energies))
@@ -163,8 +160,7 @@ class TestMakeQuadratic(unittest.TestCase):
         h = {0: 0, 1: 0, 2: 0, 3: 0}
         off = .5
 
-        poly = J.copy()
-        poly.update({(v,): bias for v, bias in h.items()})
+        poly = J | {(v,): bias for v, bias in h.items()}
         poly[()] = off
 
         bqm = make_quadratic(J, 5.0,
@@ -183,8 +179,7 @@ class TestMakeQuadratic(unittest.TestCase):
             reduced_energies = []
             for aux_config in itertools.product((-1, 1),
                                                 repeat=len(aux_variables)):
-                aux_sample = dict(zip(aux_variables, aux_config))
-                aux_sample.update(sample)
+                aux_sample = dict(zip(aux_variables, aux_config)) | sample
                 reduced_energies.append(bqm.energy(aux_sample))
 
             self.assertAlmostEqual(energy, min(reduced_energies))
@@ -202,8 +197,7 @@ class TestMakeQuadratic(unittest.TestCase):
         h = {}
         off = .5
 
-        poly = J.copy()
-        poly.update({(v,): bias for v, bias in h.items()})
+        poly = J | {(v,): bias for v, bias in h.items()}
         poly[()] = off
 
         bqm = make_quadratic(J, 10.0,
@@ -222,8 +216,7 @@ class TestMakeQuadratic(unittest.TestCase):
             reduced_energies = []
             for aux_config in itertools.product((-1, 1),
                                                 repeat=len(aux_variables)):
-                aux_sample = dict(zip(aux_variables, aux_config))
-                aux_sample.update(sample)
+                aux_sample = dict(zip(aux_variables, aux_config)) | sample
                 reduced_energies.append(bqm.energy(aux_sample))
 
             self.assertAlmostEqual(energy, min(reduced_energies))
@@ -255,8 +248,7 @@ class TestMakeQuadratic(unittest.TestCase):
             reduced_energies = []
             for aux_config in itertools.product((0, 1),
                                                 repeat=len(aux_variables)):
-                aux_sample = dict(zip(aux_variables, aux_config))
-                aux_sample.update(sample)
+                aux_sample = dict(zip(aux_variables, aux_config)) | sample
                 reduced_energies.append(bqm.energy(aux_sample))
 
             self.assertAlmostEqual(energy, min(reduced_energies))

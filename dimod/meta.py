@@ -26,11 +26,7 @@ class SamplerABCMeta(abc.ABCMeta):
         samplermixins = {name
                          for name, value in namespace.items()
                          if getattr(value, "__issamplemixin__", False)}
-        if len(samplermixins) == 3:
-            abstracts = samplermixins
-        else:
-            abstracts = set()
-
+        abstracts = samplermixins if len(samplermixins) == 3 else set()
         for base in bases:
             samplermixins = {name
                              for name in getattr(base, "__abstractmethods__", set())

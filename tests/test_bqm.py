@@ -49,10 +49,7 @@ def cross_vartype_view(*args, **kwargs):
 
 def vartype_view(*args, **kwargs):
     bqm = BinaryQuadraticModel(*args, **kwargs)
-    if bqm.vartype is dimod.SPIN:
-        return bqm.spin
-    else:
-        return bqm.binary
+    return bqm.spin if bqm.vartype is dimod.SPIN else bqm.binary
 
 
 BQMs = dict(BinaryQuadraticModel=BinaryQuadraticModel,
@@ -63,7 +60,7 @@ BQMs = dict(BinaryQuadraticModel=BinaryQuadraticModel,
             CrossVartypeView=cross_vartype_view,
             )
 
-BQM_CLSs = dict((k, v) for k, v in BQMs.items() if isinstance(v, type))
+BQM_CLSs = {k: v for k, v in BQMs.items() if isinstance(v, type)}
 
 
 class TestAddOffset(unittest.TestCase):
@@ -1468,11 +1465,10 @@ class TestNumpyMatrix(unittest.TestCase):
 
                 if row > col:
                     self.assertEqual(bias, 0)
+                elif (row, col) in quadratic:
+                    self.assertAlmostEqual(quadratic[(row, col)], bias)
                 else:
-                    if (row, col) in quadratic:
-                        self.assertAlmostEqual(quadratic[(row, col)], bias)
-                    else:
-                        self.assertAlmostEqual(quadratic[(col, row)], bias)
+                    self.assertAlmostEqual(quadratic[(col, row)], bias)
 
         #
 
@@ -2117,9 +2113,9 @@ class TestSymbolic(unittest.TestCase):
     def test_exceptions_symbolic_mode(self, name, BQM):
         bqm = BQM('SPIN')
         with self.assertRaises(TypeError):
-            bqm + 'a'
+            f'{bqm}a'
         with self.assertRaises(TypeError):
-            'a' + bqm
+            f'a{bqm}'
         with self.assertRaises(TypeError):
             bqm += 'a'
 
@@ -2776,7 +2772,7 @@ class TestViews(unittest.TestCase):
                    [0, 0, 0, 13, 14],
                    [0, 0, 0, 0, 15]], 'BINARY')
         del bqm.linear[2]
-        self.assertEqual(set(bqm.variables), set([0, 1, 3, 4]))
+        self.assertEqual(set(bqm.variables), {0, 1, 3, 4})
 
         # all the values are correct
         self.assertEqual(bqm.linear[0], 0)
@@ -2867,7 +2863,7 @@ class TestViews(unittest.TestCase):
                    [0, 0, 0, 13, 14],
                    [0, 0, 0, 0, 15]], 'SPIN')
         del bqm.quadratic[0, 1]
-        self.assertEqual(set(dict(bqm.iter_neighborhood(0))), set([2, 3, 4]))
+        self.assertEqual(set(dict(bqm.iter_neighborhood(0))), {2, 3, 4})
         assert_consistent_bqm(bqm)
 
         with self.assertRaises(KeyError):
@@ -2905,7 +2901,7 @@ class TestViews(unittest.TestCase):
     @parameterized.expand(BQMs.items())
     def test_lin_minmax(self, name, BQM):
         num_vars = 10
-        D = np.arange(num_vars*num_vars).reshape((num_vars, num_vars))
+        D = np.arange(num_vars**2).reshape((num_vars, num_vars))
         bqm = BQM(D, 'SPIN')
 
         lmin = min(bqm.linear.values())
@@ -2917,7 +2913,7 @@ class TestViews(unittest.TestCase):
     @parameterized.expand(BQMs.items())
     def test_quad_minmax(self, name, BQM):
         num_vars = 10
-        D = np.arange(num_vars*num_vars).reshape((num_vars, num_vars))
+        D = np.arange(num_vars**2).reshape((num_vars, num_vars))
         bqm = BQM(D, 'SPIN')
 
         qmin = min(bqm.quadratic.values())
@@ -2963,48 +2959,41 @@ class TestConstraint(unittest.TestCase):
         bqm = BQM('BINARY')
         num_variables = 2
         num_cases = 3
-        x = {}
-        for i in range(num_variables):
-            x[i] = bqm.add_variable('x_{i}'.format(i=i))
-
+        x = {i: bqm.add_variable('x_{i}'.format(i=i)) for i in range(num_variables)}
         bqm.add_linear_equality_constraint(
             [(x[i], 1.0) for i in range(num_variables)],
             lagrange_multiplier=1.0, constant=-1.0)
 
-        for i in x:
-            for case in range(num_cases):
-                self.assertEqual(bqm.get_linear(x[i]), -1)
-            for j in x:
+        for i, value in x.items():
+            for _ in range(num_cases):
+                self.assertEqual(bqm.get_linear(value), -1)
+            for j, value_ in x.items():
                 if j > i:
-                    for case in range(num_cases):
-                        self.assertEqual(bqm.get_quadratic(x[i], x[j]), 2.0)
+                    for _ in range(num_cases):
+                        self.assertEqual(bqm.get_quadratic(x[i], value_), 2.0)
 
     @parameterized.expand(BQMs.items())
     def test_inequality_constraint(self, name, BQM):
         bqm = BQM('BINARY')
         num_variables = 3
-        x = {}
-        for i in range(num_variables):
-            x[i] = bqm.add_variable('x_{i}'.format(i=i))
+        x = {i: bqm.add_variable('x_{i}'.format(i=i)) for i in range(num_variables)}
         slacks = [('slack_inequality0_0', 1), ('slack_inequality0_1', 2),
                   ('slack_inequality0_2', 1)]
         terms = iter([(x[i], 2.0) for i in range(num_variables)])
         slack_terms = bqm.add_linear_inequality_constraint(
             terms, lagrange_multiplier=1.0, constant=-4.0, label='inequality0')
         self.assertTrue(slacks == slack_terms)
-        for i in x:
-            self.assertEqual(bqm.get_linear(x[i]), -12)
-            for j in x:
+        for i, value in x.items():
+            self.assertEqual(bqm.get_linear(value), -12)
+            for j, value_ in x.items():
                 if j > i:
-                    self.assertEqual(bqm.get_quadratic(x[i], x[j]), 8.0)
+                    self.assertEqual(bqm.get_quadratic(x[i], value_), 8.0)
 
     @parameterized.expand(BQMs.items())
     def test_inequality_constraint_cross_zero(self, name, BQM):
         bqm = BQM('BINARY')
         num_variables = 5
-        x = {}
-        for i in range(num_variables):
-            x[i] = bqm.add_variable('x_{i}'.format(i=i))
+        x = {i: bqm.add_variable('x_{i}'.format(i=i)) for i in range(num_variables)}
         slacks = [('slack_inequality0_0', 1), ('slack_inequality0_1', 2),
                   ('slack_inequality0_2', 3), ('slack_inequality0_3', 4.0)]
         slack_terms = bqm.add_linear_inequality_constraint(
@@ -3012,32 +3001,29 @@ class TestConstraint(unittest.TestCase):
             lagrange_multiplier=1.0, constant=4.0, lb=8, ub=20, cross_zero=True,
             label='inequality0')
         self.assertTrue(slacks == slack_terms)
-        for i in x:
-            self.assertEqual(bqm.get_linear(x[i]), -36)
-            for j in x:
+        for i, value in x.items():
+            self.assertEqual(bqm.get_linear(value), -36)
+            for j, value_ in x.items():
                 if j > i:
-                    self.assertEqual(bqm.get_quadratic(x[i], x[j]), 8.0)
+                    self.assertEqual(bqm.get_quadratic(x[i], value_), 8.0)
 
     @parameterized.expand(BQMs.items())
     def test_simple_constraint_iterator(self, name, BQM):
         bqm = BQM('BINARY')
         num_variables = 2
         num_cases = 3
-        x = {}
-        for i in range(num_variables):
-            x[i] = bqm.add_variable('x_{i}'.format(i=i))
-
+        x = {i: bqm.add_variable('x_{i}'.format(i=i)) for i in range(num_variables)}
         bqm.add_linear_equality_constraint(
             ((x[i], 1.0) for i in range(num_variables)),
             lagrange_multiplier=1.0, constant=-1.0)
 
-        for i in x:
-            for case in range(num_cases):
-                self.assertEqual(bqm.get_linear(x[i]), -1)
-            for j in x:
+        for i, value in x.items():
+            for _ in range(num_cases):
+                self.assertEqual(bqm.get_linear(value), -1)
+            for j, value_ in x.items():
                 if j > i:
-                    for case in range(num_cases):
-                        self.assertEqual(bqm.get_quadratic(x[i], x[j]), 2.0)
+                    for _ in range(num_cases):
+                        self.assertEqual(bqm.get_quadratic(x[i], value_), 2.0)
 
     @parameterized.expand(BQMs.items())
     def test_more_constraint(self, name, BQM):

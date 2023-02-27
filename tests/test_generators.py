@@ -429,11 +429,11 @@ class TestDoped(unittest.TestCase):
     def test_correct_ratio(self):
         bqm = dimod.generators.random.doped(0.3, 100, seed=506)
         total = len(bqm.quadratic)
-        afm = sum([val == 1 for val in bqm.quadratic.values()])
+        afm = sum(val == 1 for val in bqm.quadratic.values())
         self.assertAlmostEqual(afm / total, 0.3, places=2)
 
     def test_correct_ratio_fm(self):
         bqm = dimod.generators.random.doped(0.3, 100, seed=506, fm=False)
         total = len(bqm.quadratic)
-        fm = sum([val == -1 for val in bqm.quadratic.values()])
+        fm = sum(val == -1 for val in bqm.quadratic.values())
         self.assertAlmostEqual(fm / total, 0.3, places=2)

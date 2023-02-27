@@ -84,7 +84,9 @@ def append_data_vectors(sampleset, **vectors):
 
     for name, vector in vectors.items():
         if len(vector) != len(record.energy):
-            raise ValueError("Length of vector {} must be equal to number of samples.".format(name))
+            raise ValueError(
+                f"Length of vector {name} must be equal to number of samples."
+            )
 
         try:
             vector = np.asarray(vector)
@@ -293,24 +295,25 @@ def as_samples(samples_like, dtype=None, copy=False, order='C'):
         # samples_like = [1, 0, 1,...] case significantly
         return as_samples(([samples_like], labels), dtype=dtype)
 
-    if not isinstance(samples_like, np.ndarray):
-        if any(isinstance(sample, abc.Mapping) for sample in samples_like):
-            # go through samples-like, turning the dicts into lists
-            samples_like, old = list(samples_like), samples_like
+    if not isinstance(samples_like, np.ndarray) and any(
+        isinstance(sample, abc.Mapping) for sample in samples_like
+    ):
+        # go through samples-like, turning the dicts into lists
+        samples_like, old = list(samples_like), samples_like
 
-            if labels is None:
-                first = samples_like[0]
-                if isinstance(first, abc.Mapping):
-                    labels = list(first)
-                else:
-                    labels = list(range(len(first)))
+        if labels is None:
+            first = samples_like[0]
+            if isinstance(first, abc.Mapping):
+                labels = list(first)
+            else:
+                labels = list(range(len(first)))
 
-            for idx, sample in enumerate(old):
-                if isinstance(sample, abc.Mapping):
-                    try:
-                        samples_like[idx] = [sample[v] for v in labels]
-                    except KeyError:
-                        raise ValueError("samples_like and labels do not match")
+        for idx, sample in enumerate(old):
+            if isinstance(sample, abc.Mapping):
+                try:
+                    samples_like[idx] = [sample[v] for v in labels]
+                except KeyError:
+                    raise ValueError("samples_like and labels do not match")
 
     if dtype is None:
         if not hasattr(samples_like, 'dtype'):
@@ -509,8 +512,7 @@ class SampleSet(abc.Iterable, abc.Sized):
 
         self._variables = variables = Variables(variables)
         if len(variables) != num_variables:
-            msg = ("mismatch between number of variables in record.sample ({}) "
-                   "and labels ({})").format(num_variables, len(variables))
+            msg = f"mismatch between number of variables in record.sample ({num_variables}) and labels ({len(variables)})"
             raise ValueError(msg)
 
         self._info = LockableDict(info)
@@ -832,7 +834,7 @@ class SampleSet(abc.Iterable, abc.Sized):
         try:
             return next(self.data(sorted_by='energy', name='Sample'))
         except StopIteration:
-            raise ValueError('{} is empty'.format(self.__class__.__name__))
+            raise ValueError(f'{self.__class__.__name__} is empty')
 
     @property
     def info(self):
@@ -1449,11 +1451,7 @@ class SampleSet(abc.Iterable, abc.Sized):
                             'keyword argument {!r}'.format(kwargs.popitem()[0]))
 
         # follow Python's slice syntax
-        if slice_args:
-            selector = slice(*slice_args)
-        else:
-            selector = slice(None)
-
+        selector = slice(*slice_args) if slice_args else slice(None)
         if sorted_by is None:
             record = self.record[selector]
         else:

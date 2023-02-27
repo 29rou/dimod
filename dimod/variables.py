@@ -48,12 +48,10 @@ def serialize_variable(v):
         return int(v)
     elif isinstance(v, Number):
         return float(v)
-    elif isinstance(v, str):
+    elif isinstance(v, str) or not isinstance(v, abc.Collection):
         return v
-    elif isinstance(v, abc.Collection):
-        return tuple(iter_serialize_variables(v))
     else:
-        return v
+        return tuple(iter_serialize_variables(v))
 
 
 def iter_serialize_variables(variables):

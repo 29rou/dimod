@@ -108,8 +108,9 @@ class Section(abc.ABC):
         """Wraps .loads_data and checks the identifier and length."""
         magic = fp.read(len(cls.magic))
         if magic != cls.magic:
-            raise ValueError("unknown subheader, expected {} but recieved "
-                             "{}".format(cls.magic, magic))
+            raise ValueError(
+                f"unknown subheader, expected {cls.magic} but recieved {magic}"
+            )
         length = np.frombuffer(fp.read(4), '<u4')[0]
         return cls.loads_data(fp.read(int(length)))
 
@@ -125,7 +126,7 @@ class VariablesSection(Section):
         return json.dumps(serializable).encode('ascii')
 
     @classmethod
-    def loads_data(self, data):
+    def loads_data(cls, data):
         return iter_deserialize_variables(json.loads(data.decode('ascii')))
 
 
@@ -225,7 +226,7 @@ class _BytesIO(io.RawIOBase):
         return True
 
 
-_loaders: Mapping[bytes, Callable] = dict()
+_loaders: Mapping[bytes, Callable] = {}
 
 
 def register(prefix: bytes, loader: Callable):
@@ -252,11 +253,7 @@ def load(fp, cls=None):
         warnings.warn("'cls' keyword argument is deprecated and ignored",
                       DeprecationWarning, stacklevel=2)
 
-    if isinstance(fp, ByteString):
-        file_like: BinaryIO = _BytesIO(fp)  # type: ignore[assignment]
-    else:
-        file_like = fp
-
+    file_like = _BytesIO(fp) if isinstance(fp, ByteString) else fp
     if not file_like.seekable:
         raise ValueError("expected file-like to be seekable")
 

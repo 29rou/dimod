@@ -154,11 +154,7 @@ def ising_simulated_annealing(h, J, beta_range=None, num_sweeps=1000):
             sigmas[u] += abs(J[(u, v)])
             sigmas[v] += abs(J[(u, v)])
 
-        if sigmas:
-            beta_final = 2. * max(sigmas.values())
-        else:
-            beta_final = 0.0
-
+        beta_final = 2. * max(sigmas.values()) if sigmas else 0.0
     else:
         if not isinstance(beta_range, (tuple, list)):
             raise TypeError("'beta_range' should be a tuple of length 2")

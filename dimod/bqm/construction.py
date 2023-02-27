@@ -83,20 +83,12 @@ def as_bqm(*args, cls=None, copy=False):
     """
 
     if cls is None:
-        if isinstance(args[0], BQM):
-            cls = type(args[0])
-        else:
-            cls = AdjVectorBQM
+        cls = type(args[0]) if isinstance(args[0], BQM) else AdjVectorBQM
     elif isinstance(cls, (Sequence, Set)):  # want Collection, but not in 3.5
-        classes = tuple(cls)
-        if not classes:
-            raise ValueError("cls kwarg should be a type or a list of types")
-        if type(args[0]) in classes:
-            cls = type(args[0])
+        if classes := tuple(cls):
+            cls = type(args[0]) if type(args[0]) in classes else classes[0]
         else:
-            # otherwise just pick the first one
-            cls = classes[0]
-
+            raise ValueError("cls kwarg should be a type or a list of types")
     if isinstance(args[0], cls) and not copy:
         # this is the only case (currently) in which copy matters
         if len(args) == 1:

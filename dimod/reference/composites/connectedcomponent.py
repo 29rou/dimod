@@ -68,8 +68,7 @@ class ConnectedComponentsComposite(ComposedSampler):
 
     @property
     def parameters(self):
-        params = self.child.parameters.copy()
-        return params
+        return self.child.parameters.copy()
 
     @property
     def properties(self):

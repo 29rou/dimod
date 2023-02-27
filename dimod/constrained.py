@@ -49,11 +49,11 @@ class TypedVariables(Variables):
         if permissive and v is not None and self.count(v):
             if as_vartype(vartype) != self.vartype(v):
                 raise ValueError("inconsistent vartype")
-            return v
         else:
             v = super()._append(v)
             self.vartypes.append(as_vartype(vartype))
-            return v
+
+        return v
 
     def _extend(self, *args, **kwargs):
         raise NotImplementedError
@@ -223,11 +223,10 @@ class ConstrainedQuadraticModel:
 
     def add_variable(self, v: Variable, vartype: VartypeLike):
         """Add a variable to the model."""
-        if self.variables.count(v):
-            if as_vartype(vartype) != self.variables.vartype(v):
-                raise ValueError("given variable has already been added with a different vartype")
-        else:
+        if not self.variables.count(v):
             return self.variables._append(vartype, v)
+        if as_vartype(vartype) != self.variables.vartype(v):
+            raise ValueError("given variable has already been added with a different vartype")
 
     @classmethod
     def from_file(cls, fp: Union[BinaryIO, ByteString]) -> "ConstrainedQuadraticModel":
@@ -235,11 +234,7 @@ class ConstrainedQuadraticModel:
 
         The inverse of :meth:`~ConstrainedQuadraticModel.to_file`.
         """
-        if isinstance(fp, ByteString):
-            file_like: BinaryIO = _BytesIO(fp)  # type: ignore[assignment]
-        else:
-            file_like = fp
-
+        file_like = _BytesIO(fp) if isinstance(fp, ByteString) else fp
         header_info = read_header(file_like, CQM_MAGIC_PREFIX)
 
         if header_info.version >= (2, 0):
@@ -258,7 +253,7 @@ class ConstrainedQuadraticModel:
                 # even on windows zip uses /
                 match = re.match("constraints/([^/]+)/", arch)
                 if match is not None:
-                    constraint_labels.add(match.group(1))
+                    constraint_labels.add(match[1])
 
             for constraint in constraint_labels:
                 lhs = load(zf.read(f"constraints/{constraint}/lhs"))

@@ -66,10 +66,7 @@ def chimera_anticluster(m, n=None, t=4, multiplier=3.0,
     r = numpy.random.RandomState(seed)
 
     m = int(m)
-    if n is None:
-        n = m
-    else:
-        n = int(n)
+    n = m if n is None else int(n)
     t = int(t)
 
     ldata = np.zeros(m*n*t*2)  # number of nodes
@@ -103,13 +100,13 @@ def chimera_anticluster(m, n=None, t=4, multiplier=3.0,
             subbqm.add_variables_from((v, bqm.linear[v]) for v in nodes)
 
         except KeyError:
-            msg = "given 'subgraph' contains nodes not in Chimera({}, {}, {})".format(m, n, t)
+            msg = f"given 'subgraph' contains nodes not in Chimera({m}, {n}, {t})"
             raise ValueError(msg)
 
         try:
             subbqm.add_interactions_from((u, v, bqm.adj[u][v]) for u, v in edges)
         except KeyError:
-            msg = "given 'subgraph' contains edges not in Chimera({}, {}, {})".format(m, n, t)
+            msg = f"given 'subgraph' contains edges not in Chimera({m}, {n}, {t})"
             raise ValueError(msg)
 
         bqm = subbqm
@@ -124,12 +121,13 @@ def _iter_chimera_tile_edges(m, n, t):
     ni = n * hoff
 
     # tile edges
-    for edge in ((k0, k1)
-                 for i in range(0, ni, hoff)
-                 for j in range(i, mi, voff)
-                 for k0 in range(j, j + t)
-                 for k1 in range(j + t, j + 2 * t)):
-        yield edge
+    yield from (
+        (k0, k1)
+        for i in range(0, ni, hoff)
+        for j in range(i, mi, voff)
+        for k0 in range(j, j + t)
+        for k1 in range(j + t, j + 2 * t)
+    )
 
 
 def _iter_chimera_intertile_edges(m, n, t):
@@ -139,15 +137,16 @@ def _iter_chimera_intertile_edges(m, n, t):
     ni = n * hoff
 
     # horizontal edges
-    for edge in ((k, k + hoff)
-                 for i in range(t, 2 * t)
-                 for j in range(i, ni - hoff, hoff)
-                 for k in range(j, mi, voff)):
-        yield edge
-
+    yield from (
+        (k, k + hoff)
+        for i in range(t, 2 * t)
+        for j in range(i, ni - hoff, hoff)
+        for k in range(j, mi, voff)
+    )
     # vertical edges
-    for edge in ((k, k + voff)
-                 for i in range(t)
-                 for j in range(i, ni, hoff)
-                 for k in range(j, mi - voff, voff)):
-        yield edge
+    yield from (
+        (k, k + voff)
+        for i in range(t)
+        for j in range(i, ni, hoff)
+        for k in range(j, mi - voff, voff)
+    )

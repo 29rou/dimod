@@ -122,7 +122,7 @@ def from_networkx_graph(G, vartype=None,
             raise ValueError(msg)
         vartype = G.vartype
 
-    linear = {v: b for v, b in G.nodes(data=node_attribute_name, default=0)}
+    linear = dict(G.nodes(data=node_attribute_name, default=0))
     quadratic = {(u, v): b
                  for u, v, b in G.edges(data=edge_attribute_name, default=0)}
     offset = getattr(G, 'offset', 0)

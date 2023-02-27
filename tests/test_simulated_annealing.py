@@ -52,17 +52,12 @@ class TestSASampler(unittest.TestCase):
             self.assertEqual(dimod.qubo_energy(sample, Q), energy)
 
     def test_bug1(self):
-        # IN IN OUT AUX
-        h = {0: -.5, 1: 0, 2: 1, 3: -.5}
         J = {(0, 2): -1, (1, 2): -1, (0, 3): .5, (1, 3): -1}
 
         J[(0, 4)] = -.1
         J[(4, 5)] = -.1
         J[(5, 6)] = -.1
-        h[4] = 0
-        h[5] = 0
-        h[6] = .1
-
+        h = {0: -0.5, 1: 0, 2: 1, 3: -0.5, 4: 0, 5: 0, 6: 0.1}
         response = dimod.SimulatedAnnealingSampler().sample_ising(h, J, num_reads=100)
 
     def test_setting_beta_range(self):
@@ -140,11 +135,11 @@ class TestSimulatedAnnealingAlgorithm(unittest.TestCase):
         nS = 100  # number of samples
 
         h = {v: random.uniform(-2, 2) for v in range(nV)}
-        J = {}
-        for u, v in itertools.combinations(h, 2):
-            if random.random() < .05:
-                J[(u, v)] = random.uniform(-1, 1)
-
+        J = {
+            (u, v): random.uniform(-1, 1)
+            for u, v in itertools.combinations(h, 2)
+            if random.random() < 0.05
+        }
         random_energies = [dimod.ising_energy({v: random.choice((-1, 1)) for v in h}, h, J)
                            for __ in range(nS)]
 

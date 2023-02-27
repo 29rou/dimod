@@ -40,10 +40,7 @@ def serialize_ndarray(arr, use_bytes=False, bytes_type=bytes):
 
     """
     arr = np.asarray(arr)  # support array-like
-    if use_bytes:
-        data = bytes_type(arr.tobytes(order='C'))
-    else:
-        data = arr.tolist()
+    data = bytes_type(arr.tobytes(order='C')) if use_bytes else arr.tolist()
     return dict(type='array',
                 data=data,
                 data_type=arr.dtype.name,
